@@ -1,51 +1,68 @@
-name: Generate Changelog
+name: 📜 Auto-Generate Release Notes
 
+# trigger on "Create release" in the GitHub UI or via API
 on:
   release:
     types: [created]
 
-jobs:
-  generate-changelog:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
+# give yourself explicit read permissions so the runner can fetch actions
+permissions:
+  contents: read
+  actions: read
 
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      # 1) pull down your repo
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      # 2) pick up Python
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
-          python-version: "3.x"
+          python-version: '3.x'
 
-      - name: Install dependencies
+      # 3) install the published package
+      - name: Install changelog-weaver
         run: |
           python -m pip install --upgrade pip
-          pip install -r requirements.txt
+          pip install changelog-weaver
 
-      - name: Create .env file
+      # 4) generate a .env from GitHub vars
+      - name: Write .env
         run: |
-          echo "SOLUTION_NAME=${{ github.repository }}" >> .env
-          echo "RELEASE_VERSION=${{ github.ref_name }}" >> .env
-          echo "SOFTWARE_SUMMARY=Release ${{ github.ref_name }}" >> .env
-          echo "GET_ITEM_SUMMARY=True" >> .env
-          echo "GET_CHANGELOG_SUMMARY=True" >> .env
-          echo "PROJECT_URL=https://github.com/${{ github.repository }}" >> .env
-          echo "QUERY=is:closed" >> .env
-          echo "ACCESS_TOKEN=${{ secrets.GITHUB_TOKEN }}" >> .env
-          echo "GPT_API_KEY=${{ secrets.GPT_API_KEY }}" >> .env
-          echo "MODEL_BASE_URL=https://api.openai.com/v1" >> .env
-          echo "MODEL=gpt-4o-mini" >> .env
-          echo "OUTPUT_FOLDER=Releases" >> .env
-          echo "LOG_LEVEL=INFO" >> .env
+          cat <<EOF >.env
+          SOLUTION_NAME=${{ github.repository }}
+          RELEASE_VERSION=${{ github.ref_name }}
+          SOFTWARE_SUMMARY=Release ${{ github.ref_name }}
+          GET_ITEM_SUMMARY=True
+          GET_CHANGELOG_SUMMARY=True
+          PROJECT_URL=https://github.com/${{ github.repository }}
+          QUERY=is:closed
+          ACCESS_TOKEN=${{ secrets.GITHUB_TOKEN }}
+          GPT_API_KEY=${{ secrets.GPT_API_KEY }}
+          MODEL_BASE_URL=https://api.openai.com/v1
+          MODEL=gpt-4o-mini
+          OUTPUT_FOLDER=Releases
+          LOG_LEVEL=INFO
+          EOF
 
+      # 5) actually generate your markdown files
       - name: Generate Changelog
         run: python -m changelog_weaver
 
-      - name: Upload Changelog
-        uses: actions/upload-artifact@v3
+      # 6) upload as a artifacts for inspection
+      - name: Upload Changelog artifact
+        uses: actions/upload-artifact@v2
         with:
           name: changelog
           path: Releases/*.md
 
-      - name: Attach Changelog to Release
+      # 7) attach it to the same release you just created
+      - name: Attach to GitHub Release
         uses: softprops/action-gh-release@v1
         with:
           files: Releases/*.md

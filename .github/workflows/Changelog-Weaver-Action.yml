@@ -27,21 +27,35 @@ jobs:
           pip install python-dotenv openai azure-devops pygithub aiohttp markdown
           pip install git+https://github.com/Hankanman/Changelog-Weaver.git@main
 
+      - name: Determine baseline for first release
+        run: |
+          # grab the very first (root) commit in the repo:
+          INITIAL=$(git rev-list --max-parents=0 HEAD)
+          # write it into .env as FROM_TAG
+          echo "FROM_TAG=$INITIAL" >> .env
+          # then write TO_TAG as your release tag
+          echo "TO_TAG=${{ github.ref_name }}" >> .env
+
       - name: Write .env
         run: |
-          echo "SOLUTION_NAME=${{ github.repository }}" >> .env
-          echo "RELEASE_VERSION=${{ github.ref_name }}" >> .env
+          echo "SOLUTION_NAME=${{ github.event.repository.name }}" > .env
+          echo "RELEASE_VERSION=${{ github.ref_name }}"    >> .env
           echo "SOFTWARE_SUMMARY=Release ${{ github.ref_name }}" >> .env
-          echo "GET_ITEM_SUMMARY=True" >> .env
+          echo "GET_ITEM_SUMMARY=True"      >> .env
           echo "GET_CHANGELOG_SUMMARY=True" >> .env
+          echo "INCLUDE_COMMITS=True"       >> .env
           echo "PROJECT_URL=https://github.com/${{ github.repository }}" >> .env
-          echo "QUERY=is:closed" >> .env
-          echo "ACCESS_TOKEN=${{ secrets.GITHUB_TOKEN }}" >> .env
-          echo "GPT_API_KEY=${{ secrets.GPT_API_KEY }}" >> .env
-          echo "MODEL_BASE_URL=https://api.openai.com/v1" >> .env
-          echo "MODEL=gpt-4o-mini" >> .env
-          echo "OUTPUT_FOLDER=Releases" >> .env
-          echo "LOG_LEVEL=INFO" >> .env
+          echo "REPO_NAME=${{ github.event.repository.name }}"         >> .env
+          echo "BRANCH=${{ github.event.release.target_commitish }}"   >> .env
+          echo "FROM_TAG=${{ env.FROM_TAG }}"                          >> .env
+          echo "TO_TAG=${{ github.ref_name }}"                         >> .env
+          echo "QUERY=is:closed"                                      >> .env
+          echo "ACCESS_TOKEN=${{ secrets.GITHUB_TOKEN }}"              >> .env
+          echo "GPT_API_KEY=${{ secrets.GPT_API_KEY }}"                >> .env
+          echo "MODEL_BASE_URL=https://api.openai.com/v1"              >> .env
+          echo "MODEL=gpt-4o-mini"                       >> .env
+          echo "OUTPUT_FOLDER=Releases"                  >> .env
+          echo "LOG_LEVEL=INFO"                          >> .env
 
       - name: Generate Changelog
         run: python -m changelog_weaver

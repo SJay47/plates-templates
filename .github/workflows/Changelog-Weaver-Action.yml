@@ -5,29 +5,26 @@ on:
     types: [created]
 
 permissions:
-  contents: write
+  contents: write   # for updateRelease
   actions: read
 
 jobs:
   build:
     runs-on: ubuntu-latest
-
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
+      - uses: actions/checkout@v3
 
-      - name: Set up Python
-        uses: actions/setup-python@v4
+      - uses: actions/setup-python@v4
         with:
           python-version: '3.x'
 
-      - name: Install dependencies
+      - name: Install Weaver & deps
         run: |
           python -m pip install --upgrade pip
           pip install python-dotenv openai azure-devops pygithub aiohttp markdown
           pip install git+https://github.com/Hankanman/Changelog-Weaver.git@main
 
-      - name: Write .env (all required variables)
+      - name: Write .env
         run: |
           INITIAL=$(git rev-list --max-parents=0 HEAD)
           cat <<EOF > .env
@@ -54,28 +51,28 @@ jobs:
       - name: Generate Changelog
         run: python -m changelog_weaver
 
-      - name: Upload Changelog artifact
+      - name: Upload Changelog artifact (optional)
         uses: actions/upload-artifact@v4
         with:
           name: changelog
           path: Releases/*.md
 
-      - name: Update Release Description
-        id: publish
-        uses: actions/create-release@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Patch Release description from generated Markdown
+        uses: actions/github-script@v6
         with:
-          tag_name: ${{ github.ref_name }}
-          release_name: Release ${{ github.ref_name }}
-          body_path: Releases/${{ github.event.repository.name }}-${{ github.ref_name }}.md
-          draft: false
-          prerelease: false
-         
-
-      - name: Attach to GitHub Release
-        uses: softprops/action-gh-release@v1
-        with:
-          files: Releases/*.md
+          script: |
+            const fs   = require('fs');
+            const path = require('path');
+            const files = fs.readdirSync('Releases');
+            const mdFile = files.find(f => f.endsWith('.md'));
+            if (!mdFile) throw new Error(`No markdown in Releases/: ${files}`);
+            const mdPath = path.join('Releases', mdFile);
+            const body   = fs.readFileSync(mdPath, 'utf8');
+            await github.rest.repos.updateRelease({
+              owner:      context.repo.owner,
+              repo:       context.repo.repo,
+              release_id: context.payload.release.id,
+              body
+            });
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

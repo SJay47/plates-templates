@@ -53,7 +53,8 @@ jobs:
       # 5) actually generate your markdown files
       - name: Generate Changelog
         run: python -m changelog_weaver
-
+      - name: List Generated Files
+        run: ls -R Releases
       # 6) upload as a artifacts for inspection
       - name: Upload Changelog artifact
         uses: actions/upload-artifact@v3

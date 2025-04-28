@@ -48,7 +48,7 @@ jobs:
         run: python -m changelog_weaver
 
       - name: Upload Changelog artifact
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v4
         with:
           name: changelog
           path: Releases/*.md

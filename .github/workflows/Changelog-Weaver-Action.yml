@@ -56,7 +56,7 @@ jobs:
 
       # 6) upload as a artifacts for inspection
       - name: Upload Changelog artifact
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
           name: changelog
           path: Releases/*.md

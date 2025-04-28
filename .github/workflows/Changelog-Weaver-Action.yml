@@ -27,29 +27,29 @@ jobs:
           pip install python-dotenv openai azure-devops pygithub aiohttp markdown
           pip install git+https://github.com/Hankanman/Changelog-Weaver.git@main
 
-          - name: Write .env (all required variables)
-          run: |
-            INITIAL=$(git rev-list --max-parents=0 HEAD)
-            cat <<EOF > .env
-            SOLUTION_NAME=${{ github.event.repository.name }}
-            RELEASE_VERSION=${{ github.ref_name }}
-            SOFTWARE_SUMMARY=Release ${{ github.ref_name }}
-            GET_ITEM_SUMMARY=True
-            GET_CHANGELOG_SUMMARY=True
-            INCLUDE_COMMITS=True
-            PROJECT_URL=https://github.com/${{ github.repository }}
-            REPO_NAME=${{ github.event.repository.name }}
-            BRANCH=${{ github.event.release.target_commitish }}
-            FROM_TAG=$INITIAL
-            TO_TAG=${{ github.ref_name }}
-            QUERY=is:closed
-            ACCESS_TOKEN=${{ secrets.GITHUB_TOKEN }}
-            GPT_API_KEY=${{ secrets.GPT_API_KEY }}
-            MODEL_BASE_URL=https://api.openai.com/v1
-            MODEL=gpt-4o-mini
-            OUTPUT_FOLDER=Releases
-            LOG_LEVEL=INFO
-            EOF
+      - name: Write .env (all required variables)
+        run: |
+          INITIAL=$(git rev-list --max-parents=0 HEAD)
+          cat <<EOF > .env
+          SOLUTION_NAME=${{ github.event.repository.name }}
+          RELEASE_VERSION=${{ github.ref_name }}
+          SOFTWARE_SUMMARY=Release ${{ github.ref_name }}
+          GET_ITEM_SUMMARY=True
+          GET_CHANGELOG_SUMMARY=True
+          INCLUDE_COMMITS=True
+          PROJECT_URL=https://github.com/${{ github.repository }}
+          REPO_NAME=${{ github.event.repository.name }}
+          BRANCH=${{ github.event.release.target_commitish }}
+          FROM_TAG=$INITIAL
+          TO_TAG=${{ github.ref_name }}
+          QUERY=is:closed
+          ACCESS_TOKEN=${{ secrets.GITHUB_TOKEN }}
+          GPT_API_KEY=${{ secrets.GPT_API_KEY }}
+          MODEL_BASE_URL=https://api.openai.com/v1
+          MODEL=gpt-4o-mini
+          OUTPUT_FOLDER=Releases
+          LOG_LEVEL=INFO
+          EOF
 
       - name: Generate Changelog
         run: python -m changelog_weaver

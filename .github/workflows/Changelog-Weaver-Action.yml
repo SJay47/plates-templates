@@ -25,25 +25,23 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install python-dotenv openai azure-devops pygithub aiohttp markdown
-          pip install git+https://github.com/Hankanman/Changelog-Weaver.git@main
+          pip install -r requirements.txt
 
       - name: Write .env
         run: |
-          cat <<EOF >.env
-          SOLUTION_NAME=${{ github.repository }}
-          RELEASE_VERSION=${{ github.ref_name }}
-          SOFTWARE_SUMMARY=Release ${{ github.ref_name }}
-          GET_ITEM_SUMMARY=True
-          GET_CHANGELOG_SUMMARY=True
-          PROJECT_URL=https://github.com/${{ github.repository }}
-          QUERY=is:closed
-          ACCESS_TOKEN=${{ secrets.GITHUB_TOKEN }}
-          GPT_API_KEY=${{ secrets.GPT_API_KEY }}
-          MODEL_BASE_URL=https://api.openai.com/v1
-          MODEL=gpt-4o-mini
-          OUTPUT_FOLDER=Releases
-          LOG_LEVEL=INFO
-          EOF
+          echo "SOLUTION_NAME=${{ github.repository }}" >> .env
+          echo "RELEASE_VERSION=${{ github.ref_name }}" >> .env
+          echo "SOFTWARE_SUMMARY=Release ${{ github.ref_name }}" >> .env
+          echo "GET_ITEM_SUMMARY=True" >> .env
+          echo "GET_CHANGELOG_SUMMARY=True" >> .env
+          echo "PROJECT_URL=https://github.com/${{ github.repository }}" >> .env
+          echo "QUERY=is:closed" >> .env
+          echo "ACCESS_TOKEN=${{ secrets.GITHUB_TOKEN }}" >> .env
+          echo "GPT_API_KEY=${{ secrets.GPT_API_KEY }}" >> .env
+          echo "MODEL_BASE_URL=https://api.openai.com/v1" >> .env
+          echo "MODEL=gpt-4o-mini" >> .env
+          echo "OUTPUT_FOLDER=Releases" >> .env
+          echo "LOG_LEVEL=INFO" >> .env
 
       - name: Generate Changelog
         run: python -m changelog_weaver

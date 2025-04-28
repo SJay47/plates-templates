@@ -7,8 +7,8 @@ on:
 
 # give yourself explicit read permissions so the runner can fetch actions
 permissions:
-  contents: read
-  actions: read
+  contents: write
+  actions: write
 
 jobs:
   build:
